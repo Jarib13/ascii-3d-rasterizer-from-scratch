@@ -5,6 +5,7 @@ const screen_height = 90;
 
 var screen_buffer: [screen_width * screen_height]f32 = undefined;
 var screen_depth_buffer: [screen_width * screen_height]f32 = undefined;
+var noise_buffer: [screen_width * screen_height]f32 = undefined;
 
 var ascii_sorted: []const u8 = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'. ";
 var ascii_sorted2: []const u8 = " `.-':_,^=;><+!rc*/z?sLTv)J7(|Fi{C}fI31tlu[neoZ5Yxjya]2ESwqkP6h9d4VpOGbUAKXHm8RD#$Bg0MNWQ%&@";
@@ -23,6 +24,16 @@ const vec3 = struct {
 var timer: std.time.Timer = undefined;
 
 pub fn main() !void {
+    var random = std.rand.DefaultPrng.init(0);
+    var rng = random.random();
+
+    for (0..screen_height) |uy| {
+        for (0..screen_width) |ux| {
+            var p = uy * screen_width + ux;
+            noise_buffer[p] = rng.float(f32) * 0.03;
+        }
+    }
+
     timer = try std.time.Timer.start();
 
     var last_time = get_time();
@@ -72,81 +83,81 @@ fn render() void {
 
 fn draw_cube() void {
     draw_triangle_3d(
-        .{ .x = -1, .y = -1, .z = 1 },
-        .{ .x = 1, .y = -1, .z = 1 },
         .{ .x = 1, .y = 1, .z = 1 },
-        0.6,
+        .{ .x = 1, .y = -1, .z = 1 },
+        .{ .x = -1, .y = -1, .z = 1 },
+        0.95,
     );
     draw_triangle_3d(
         .{ .x = -1, .y = -1, .z = 1 },
         .{ .x = -1, .y = 1, .z = 1 },
         .{ .x = 1, .y = 1, .z = 1 },
-        0.63,
+        1,
     );
 
     draw_triangle_3d(
         .{ .x = -1, .y = -1, .z = -1 },
         .{ .x = 1, .y = -1, .z = -1 },
         .{ .x = 1, .y = 1, .z = -1 },
-        0.3,
+        0.95,
     );
     draw_triangle_3d(
-        .{ .x = -1, .y = -1, .z = -1 },
-        .{ .x = -1, .y = 1, .z = -1 },
         .{ .x = 1, .y = 1, .z = -1 },
-        0.33,
+        .{ .x = -1, .y = 1, .z = -1 },
+        .{ .x = -1, .y = -1, .z = -1 },
+        1,
     );
 
     draw_triangle_3d(
-        .{ .x = -1, .y = -1, .z = -1 },
-        .{ .x = 1, .y = -1, .z = -1 },
         .{ .x = 1, .y = -1, .z = 1 },
-        0.4,
+        .{ .x = 1, .y = -1, .z = -1 },
+        .{ .x = -1, .y = -1, .z = -1 },
+        0.01,
     );
     draw_triangle_3d(
         .{ .x = -1, .y = -1, .z = -1 },
         .{ .x = -1, .y = -1, .z = 1 },
         .{ .x = 1, .y = -1, .z = 1 },
-        0.43,
+        0.02,
     );
 
     draw_triangle_3d(
         .{ .x = -1, .y = 1, .z = -1 },
         .{ .x = 1, .y = 1, .z = -1 },
         .{ .x = 1, .y = 1, .z = 1 },
-        0.4,
+        0.01,
     );
     draw_triangle_3d(
-        .{ .x = -1, .y = 1, .z = -1 },
-        .{ .x = -1, .y = 1, .z = 1 },
         .{ .x = 1, .y = 1, .z = 1 },
-        0.43,
+        .{ .x = -1, .y = 1, .z = 1 },
+        .{ .x = -1, .y = 1, .z = -1 },
+        0.02,
     );
 
     draw_triangle_3d(
+        .{ .x = -1, .y = 1, .z = 1 },
         .{ .x = -1, .y = -1, .z = -1 },
         .{ .x = -1, .y = 1, .z = -1 },
-        .{ .x = -1, .y = 1, .z = 1 },
-        0.7,
+        0.12,
     );
     draw_triangle_3d(
-        .{ .x = -1, .y = -1, .z = -1 },
+        .{ .x = -1, .y = 1, .z = 1 },
         .{ .x = -1, .y = -1, .z = 1 },
-        .{ .x = -1, .y = 1, .z = 1 },
-        0.73,
+        .{ .x = -1, .y = -1, .z = -1 },
+        0.14,
     );
 
     draw_triangle_3d(
-        .{ .x = 1, .y = -1, .z = -1 },
-        .{ .x = 1, .y = 1, .z = -1 },
         .{ .x = 1, .y = 1, .z = 1 },
-        0.2,
+        .{ .x = 1, .y = 1, .z = -1 },
+        .{ .x = 1, .y = -1, .z = -1 },
+        0.12,
     );
     draw_triangle_3d(
         .{ .x = 1, .y = -1, .z = -1 },
         .{ .x = 1, .y = -1, .z = 1 },
         .{ .x = 1, .y = 1, .z = 1 },
-        0.23,
+        0.14,
     );
 }
 
@@ -201,7 +212,7 @@ fn perspective(point: vec3) vec2 {
 }
 
 fn lux_to_char(lux: f32) u8 {
-    var l = @min(lux * lux, 1);
+    var l = @min(lux, 1);
     return ascii_sorted2[@as(usize, @intFromFloat(l * @as(f32, @floatFromInt(ascii_sorted2.len - 1))))];
 }
 
@@ -214,7 +225,7 @@ fn unnormalize(point: vec2) vec2 {
 
 fn transform_to_world(point: vec3) vec3 {
     var transformed = scale(point, scaleXYZ);
-    //transformed = rotateOnX(transformed, rotateX);
+    transformed = rotateOnX(transformed, rotateX);
     transformed = rotateOnY(transformed, rotateY);
     transformed = rotateOnZ(transformed, rotateZ);
     return translate(transformed, translateXYZ);
@@ -253,6 +264,26 @@ fn sub(a: vec3, b: vec3) vec3 {
     };
 }
 
+fn add(a: vec3, b: vec3) vec3 {
+    return vec3{
+        .x = a.x + b.x,
+        .y = a.y + b.y,
+        .z = a.z + b.z,
+    };
+}
+
+fn div(a: vec3, s: f32) vec3 {
+    return vec3{
+        .x = a.x / s,
+        .y = a.y / s,
+        .z = a.z / s,
+    };
+}
+
+fn distance(a: vec3, b: vec3) f32 {
+    return @sqrt(std.math.pow(f32, a.x - b.x, 2) + std.math.pow(f32, a.y - b.y, 2) + std.math.pow(f32, a.z - b.z, 2));
+}
+
 fn draw_triangle_3d(a: vec3, b: vec3, c: vec3, lux: f32) void {
     var wa = transform_to_world(a);
     var wb = transform_to_world(b);
@@ -262,8 +293,14 @@ fn draw_triangle_3d(a: vec3, b: vec3, c: vec3, lux: f32) void {
     var line2 = normalize(sub(wa, wc));
 
     var normal = normalize(cross(line1, line2));
-    const light_source = normalize(.{ .x = 0.71, .y = 0, .z = 0.71 });
+    const light_source = normalize(.{ .x = 1, .y = 0, .z = 1 });
     var lux2 = lux * ((dot(normal, light_source) + 1) * 0.5);
+    _ = lux2;
+
+    // var average_depth = distance(
+    //     vec3{ .x = 0, .y = 0, .z = 0 },
+    //     div(add(wa, add(wb, wc)), 3),
+    // );
 
     var average_depth = (wa.z + wb.z + wc.z) / 3;
 
@@ -271,7 +308,7 @@ fn draw_triangle_3d(a: vec3, b: vec3, c: vec3, lux: f32) void {
         transform_to_screenspace(wa),
         transform_to_screenspace(wb),
         transform_to_screenspace(wc),
-        lux2,
+        lux,
         average_depth,
     );
 }
@@ -396,7 +433,7 @@ fn render_screen() void {
             lux += screen_buffer[(y2 + 1) * screen_width + x2 + 1];
             lux /= 4;
 
-            screen_char_buffer[y * (char_buffer_width) + x] = lux_to_char(lux);
+            screen_char_buffer[y * (char_buffer_width) + x] = lux_to_char(lux + if (lux > 0) noise_buffer[y * (char_buffer_width) + x] else 0);
         }
 
         screen_char_buffer[((y + 1) * char_buffer_width) - 1] = '\n';
